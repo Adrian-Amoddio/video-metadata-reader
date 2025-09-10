@@ -1,0 +1,6 @@
+# Ignore build folder and junk
+/build/
+/CMakeFiles/
+/CMakeCache.txt
+/*.sln
+/*.vcxproj*
