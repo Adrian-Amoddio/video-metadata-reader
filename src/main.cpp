@@ -6,7 +6,13 @@
 
 extern "C" {
 #include <libavformat/avformat.h>
+#include <libavcodec/avcodec.h>     
 #include <libavutil/avutil.h>
+#include <libavutil/rational.h>     
+#include <libavutil/samplefmt.h>
+#include <libavutil/channel_layout.h>
+
+
 }
 
 // Converts the FFmpeg error code to a string and returns
@@ -99,6 +105,113 @@ int main(int argc, char** argv) {
     }
 
 
+    // Number of streams and types
+    int total = static_cast<int>(video_metadata->nb_streams);
+    int v = 0, a = 0, sub = 0, other = 0;
+
+    for (unsigned i = 0; i < video_metadata->nb_streams; ++i) {
+        const AVStream* st = video_metadata->streams[i];
+        const AVCodecParameters* par = st->codecpar;
+        switch (par->codec_type) {
+            case AVMEDIA_TYPE_VIDEO:    ++v; break;
+            case AVMEDIA_TYPE_AUDIO:    ++a; break;
+            case AVMEDIA_TYPE_SUBTITLE: ++sub; break;
+            default:                    ++other; break;
+        }
+    }
+
+    std::cout << "Streams: total=" << total
+            << "  video=" << v
+            << "  audio=" << a
+            << "  subtitle=" << sub
+            << "  other=" << other << "\n";
+
+
+
+    // Video stream details (resolution and fps)
+    for (unsigned i = 0; i < video_metadata->nb_streams; ++i) {
+        const AVStream* st = video_metadata->streams[i];
+        const AVCodecParameters* par = st->codecpar;
+        if (par->codec_type != AVMEDIA_TYPE_VIDEO) continue;
+
+        const char* codec = avcodec_get_name(par->codec_id);
+        int w = par->width, h = par->height;
+
+        // FPS: prefer avg_frame_rate, fallback r_frame_rate
+        double fps = 0.0;
+        if (st->avg_frame_rate.num > 0 && st->avg_frame_rate.den > 0) {
+            fps = av_q2d(st->avg_frame_rate);
+        } else if (st->r_frame_rate.num > 0 && st->r_frame_rate.den > 0) {
+            fps = av_q2d(st->r_frame_rate);
+        }
+
+        std::cout << "[Video #" << i << "] "
+                << (codec ? codec : "unknown");
+        if (w > 0 && h > 0) std::cout << "  " << w << "x" << h;
+        if (fps > 0.0)     std::cout << "  " << std::fixed << std::setprecision(2) << fps << " fps";
+        std::cout << "\n";
+    }
+
+
+
+    // Audio stream details
+    for (unsigned i = 0; i < video_metadata->nb_streams; ++i) {
+        const AVStream* st = video_metadata->streams[i];
+        const AVCodecParameters* par = st->codecpar;
+        if (par->codec_type != AVMEDIA_TYPE_AUDIO) continue;
+
+        const char* codec = avcodec_get_name(par->codec_id);
+        int channels = par->ch_layout.nb_channels;       
+        int sample_rate = par->sample_rate;
+        const char* sfmt = av_get_sample_fmt_name((AVSampleFormat)par->format);
+
+        std::cout << "[Audio #" << i << "] "
+                << (codec ? codec : "unknown");
+        if (channels > 0)    std::cout << "  " << channels << "ch";
+        if (sample_rate > 0) std::cout << "  " << sample_rate << " Hz";
+        if (sfmt)            std::cout << "  " << sfmt;
+        std::cout << "\n";
+    }
+
+
+
+    // Best streams summary
+    int best_v = av_find_best_stream(video_metadata, AVMEDIA_TYPE_VIDEO, -1, -1, nullptr, 0);
+    if (best_v >= 0) {
+        const AVStream* st = video_metadata->streams[best_v];
+        const AVCodecParameters* par = st->codecpar;
+        const char* codec = avcodec_get_name(par->codec_id);
+        int w = par->width, h = par->height;
+        double fps = 0.0;
+        if (st->avg_frame_rate.num > 0 && st->avg_frame_rate.den > 0) fps = av_q2d(st->avg_frame_rate);
+        else if (st->r_frame_rate.num > 0 && st->r_frame_rate.den > 0) fps = av_q2d(st->r_frame_rate);
+
+        std::cout << "Best video: #" << best_v << "  "
+                << (codec ? codec : "unknown");
+        if (w > 0 && h > 0) std::cout << "  " << w << "x" << h;
+        if (fps > 0.0)     std::cout << "  " << std::fixed << std::setprecision(2) << "  " << fps << " fps";
+        std::cout << "\n";
+    }
+
+    int best_a = av_find_best_stream(video_metadata, AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0);
+    if (best_a >= 0) {
+        const AVStream* st = video_metadata->streams[best_a];
+        const AVCodecParameters* par = st->codecpar;
+        const char* codec = avcodec_get_name(par->codec_id);
+        int channels = par->ch_layout.nb_channels;
+        int sample_rate = par->sample_rate;
+
+        std::cout << "Best audio: #" << best_a << "  "
+                << (codec ? codec : "unknown");
+        if (channels > 0)    std::cout << "  " << channels << "ch";
+        if (sample_rate > 0) std::cout << "  " << sample_rate << " Hz";
+        std::cout << "\n";
+    }
+
+
+
+
+    //------------------------------------------------------------------------------//
 
     // This frees memory and sets video_metadata back to nullptr.
     avformat_close_input(&video_metadata);
