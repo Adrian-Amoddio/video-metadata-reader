@@ -1,15 +1,14 @@
-#include <iostream>
+
 #include <string>
 
-int main(int argc, char** argv) {
-
-    std::cout << "Number of arguments (argc): " << argc << "\n\n";
-
-    for (int i = 0; i < argc; i++) {
-        std::cout << "argv[" << i << "]: " << argv[i] << "\n";
-    }
-
+#include <iostream>
+extern "C" {
+#include <libavutil/avutil.h>
+}
+int main() {
+    std::cout << "FFmpeg version: " << av_version_info() << "\n";
     return 0;
+}
 
 
     // if (argc < 2) {
@@ -23,4 +22,3 @@ int main(int argc, char** argv) {
     // std::cout << "TODO: analize file: " << path << (json ? " (json mode)\n" : "\n");
     
     // return 0;
-}
