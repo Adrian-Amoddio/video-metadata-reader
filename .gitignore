@@ -4,4 +4,6 @@
 /CMakeCache.txt
 /*.sln
 /*.vcxproj*
-/video_files/0W9A9375.mp4
+video_files/
+*.mp4
+
