@@ -23,7 +23,8 @@ Streams: total=2  video=1  audio=1  subtitle=0  other=0
 [Video #0] mpeg2video  1280x720  23.98 fps
 [Audio #1] pcm_s16be  2ch  48000 Hz  s16
 Best video: #0  mpeg2video  1280x720    23.98 fps
-Best audio: #1  pcm_s16be  2ch  48000 Hz```
+Best audio: #1  pcm_s16be  2ch  48000 Hz
+```
 
 
 
