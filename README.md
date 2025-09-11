@@ -43,14 +43,18 @@ Best audio: #1  pcm_s16be  2ch  48000 Hz
 
 2. Configure and Build
 
+```
 cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=G:/Tools/vcpkg/scripts/buildsystems/vcpkg.cmake -DCMAKE_BUILD_TYPE=Release
 cmake --build build --config Release
+```
 
 
 3. Run
 
+```
 cd build\Release
 .\videoinfo.exe path\to\video_file_name.extention
+```
 
 
 
